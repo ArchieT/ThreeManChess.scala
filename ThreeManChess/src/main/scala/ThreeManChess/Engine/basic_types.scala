@@ -51,7 +51,7 @@ object Pos {
   type SegmentEight = Int Refined Interval.Closed[W.`0`.T,W.`7`.T]
   type Rank = Int Refined Interval.Closed[W.`0`.T,W.`5`.T]
   type File = Int Refined Interval.Closed[W.`0`.T,W.`23`.T]
-  def opposite(a : File) : File = a<12 ? f+12 : f-12
+  def opposite(a : File) : File = if (a<12) f+12 else f-12
   def plus(a : File, b : Int Refined NonNegative) : File = (a+b)%24
   def minus(a : File, b : Int Refined NonNegative) : File = Math.floorMod(a-b, 24)
   def signSum(s : FilewiseDirection, a : File, b : Int Refined NonNegative) : File = s match {
@@ -74,7 +74,7 @@ sealed trait LinearDirection {
   def addOneTo(from : Pos) : Option[Pos]
 }
 sealed trait StraightDirection extends LinearDirection
-sealed trait RankwiseDirection extends StraightDirection, Reversible[RankwiseDirection]
+sealed trait RankwiseDirection extends StraightDirection with Reversible[RankwiseDirection]
 case object Inwards extends RankwiseDirection {
   def rever = Outwards
   def addOneTo(from: Pos) : Option[Pos] =
@@ -85,7 +85,7 @@ case object Outwards extends RankwiseDirection {
   def addOneTo(from: Pos) : Option[Pos] =
     if (from.rank==0) None else Some(Pos(from.rank-1, from.file))
 }
-sealed trait FilewiseDirection extends StraightDirection, Reversible[FilewiseDirection]
+sealed trait FilewiseDirection extends StraightDirection with Reversible[FilewiseDirection]
 case object Pluswards extends FilewiseDirection {
   def rever = Minuswards
   def addOneTo(from: Pos) : Option[Pos] = Some(Pos(from.rank, Pos.plus(from.file, 1)))
@@ -94,7 +94,7 @@ case object Minuswards extends FilewiseDirection {
   def rever = Pluswards
   def addOneTo(from: Pos) : Option[Pos] = Some(Pos(from.rank, Pos.minus(from.file, 1)))
 }
-case final class DiagonalDirection(val rankwise : RankwiseDirection,
+final case class DiagonalDirection(val rankwise : RankwiseDirection,
                                    val filewise: FilewiseDirection) {
   def rever = DiagonalDirection(rankwise.rever, filewise.rever)
   def addOneTo(from: Pos) : Option[Pos] = rankwise match {
@@ -124,25 +124,25 @@ class LinearVec[DirectionClass <: LinearDirection](val direction : DirectionClas
       Some(\/-(LinearVec(direction, distance-1)))
     else if (DirectionClass==RankwiseDirection)
       direction match {
-        Inwards => Some(-\/((r:Rank) => r match {
-          5 => LinearVec(direction.rever, distance-1)
-          _ => LinearVec(direction, distance-1)
+        case Inwards => Some(-\/((r:Rank) => r match {
+          case 5 => LinearVec(direction.rever, distance-1)
+          case _ => LinearVec(direction, distance-1)
         }))
-        Outwards => Some(\/-(LinearVec(direction, distance-1)))
+        case Outwards => Some(\/-(LinearVec(direction, distance-1)))
       }
     else if(DirectionClass==DiagonalDirection)
       direction.rankwise match {
-        Inwards => Some(-\/((r:Rank) => r match {
-          5 => LinearVec(DiagonalDirection(direction.rankwise.rever, direction.filewise), distance-1)
-          _ => LinearVec(direction, distance-1)
+        case Inwards => Some(-\/((r:Rank) => r match {
+          case 5 => LinearVec(DiagonalDirection(direction.rankwise.rever, direction.filewise), distance-1)
+          case _ => LinearVec(direction, distance-1)
         }))
-        Outwards => Some(\/-(LinearVec(direction, distance-1)))
+        case Outwards => Some(\/-(LinearVec(direction, distance-1)))
       }
   def tail(r:Rank) : Option[LinearVec[DirectionClass]] = tailRankInvol.map(x =>
     x.leftMap(f => f(r)))
 
 
-  def addTo(from: Pos) : Option[Pos] =
+  def addTo(from: Pos) : Option[Pos] = None
 }
 
 //trait RankInvolVec[A <: LinearVec[RankwiseDirection] | A<: LinearVec[DiagonalDirection]] {
