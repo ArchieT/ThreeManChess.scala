@@ -2,6 +2,8 @@ name := "ThreeManChess"
 
 version := "0.1"
 
+organization := "pl.archiet"
+
 scalaVersion := "2.12.6"
 scalacOptions ++= Seq(
   "-language:_",
