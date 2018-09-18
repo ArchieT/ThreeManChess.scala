@@ -18,3 +18,11 @@ addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
 
 libraryDependencies += "eu.timepit" %% "refined-scalaz" % "0.9.2"
+
+libraryDependencies += "org.scalaz" %% "testz-core" % "0.0.5"
+
+libraryDependencies += "org.scalaz" %% "testz-stdlib" % "0.0.5"
+
+libraryDependencies += "org.scalaz" %% "testz-runner" % "0.0.5"
+
+libraryDependencies += "org.scalaz" %% "testz-scalaz" % "0.0.5"
