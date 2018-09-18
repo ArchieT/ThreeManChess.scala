@@ -7,6 +7,7 @@ import refined.collection.NonEmpty
 import refined.auto._
 
 import scala.None
+import scalaz._
 
 /**
   * Created by Michał Krzysztof Feiler on 30.08.18.
@@ -116,7 +117,37 @@ trait Vec {
 }
 class LinearVec[DirectionClass <: LinearDirection](val direction : DirectionClass,
                                                    val distance : Int Refined Positive)
-  extends Vec
+  extends Vec {
+  def tailRankInvol : Option[\/[Rank => LinearVec[DirectionClass], LinearVec[DirectionClass]]] =
+    if (distance==1) None
+    else if (DirectionClass==FilewiseDirection)
+      Some(\/-(LinearVec(direction, distance-1)))
+    else if (DirectionClass==RankwiseDirection)
+      direction match {
+        Inwards => Some(-\/((r:Rank) => r match {
+          5 => LinearVec(direction.rever, distance-1)
+          _ => LinearVec(direction, distance-1)
+        }))
+        Outwards => Some(\/-(LinearVec(direction, distance-1)))
+      }
+    else if(DirectionClass==DiagonalDirection)
+      direction.rankwise match {
+        Inwards => Some(-\/((r:Rank) => r match {
+          5 => LinearVec(DiagonalDirection(direction.rankwise.rever, direction.filewise), distance-1)
+          _ => LinearVec(direction, distance-1)
+        }))
+        Outwards => Some(\/-(LinearVec(direction, distance-1)))
+      }
+  def tail(r:Rank) : Option[LinearVec[DirectionClass]] = tailRankInvol.map(x =>
+    x.leftMap(f => f(r)))
+
+
+  def addTo(from: Pos) : Option[Pos] =
+}
+
+//trait RankInvolVec[A <: LinearVec[RankwiseDirection] | A<: LinearVec[DiagonalDirection]] {
+//  def tail(from: Pos) : Option[Rank => Pos]
+//}
 
 sealed trait Orientation {
   val perpendicular : Orientation
